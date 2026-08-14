@@ -7,41 +7,38 @@
 <meta name="description" content="Dodaj zdjęcie swojej ściany lub elewacji i sprawdź, jak będzie wyglądać z płytkami z cegły Stare Cegły.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg: #1c1815;
-    --bg-panel: #241f19;
-    --bg-panel-raised: #2c2620;
-    --brick: #b1502f;
-    --brick-dark: #8a3c22;
-    --brick-bright: #d9673f;
-    --sand: #c99a67;
-    --cream: #f2e9dc;
-    --muted: #a3937f;
-    --line: #3c3229;
-    --line-bright: #58493a;
+    --bg: #ffffff;
+    --bg-panel: #faf8f6;
+    --bg-panel-raised: #f2ede8;
+    --brick: #f49e1a;
+    --brick-dark: #cc7f0f;
+    --brick-bright: #ffb136;
+    --sand: #d98f3a;
+    --cream: #1c1815;
+    --muted: #8a8078;
+    --line: #e7e1d9;
+    --line-bright: #d5cbbe;
     --ok: #7a9e6e;
     --radius: 3px;
-    --display: 'Zilla Slab', serif;
-    --body: 'Work Sans', sans-serif;
-    --mono: 'IBM Plex Mono', monospace;
+    --display: 'Montserrat', sans-serif;
+    --body: 'Montserrat', sans-serif;
+    --mono: 'Montserrat', sans-serif;
   }
   *{box-sizing:border-box;}
   html{scroll-behavior:smooth;}
   body{
     margin:0;
     background:var(--bg);
-    background-image:
-      repeating-linear-gradient(180deg, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 27px, rgba(0,0,0,0.14) 28px),
-      repeating-linear-gradient(90deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 90px);
     color:var(--cream);
     font-family:var(--body);
     line-height:1.5;
     -webkit-font-smoothing:antialiased;
   }
   a{color:inherit;}
-  ::selection{background:var(--brick); color:var(--cream);}
+  ::selection{background:var(--brick); color:#fff;}
 
   /* ---------- topbar ---------- */
   .topbar{
@@ -49,19 +46,18 @@
     padding:18px 28px;
     border-bottom:1px solid var(--line);
     position:sticky; top:0; z-index:40;
-    background:rgba(28,24,21,0.92);
+    background:rgba(255,255,255,0.92);
     backdrop-filter:blur(6px);
   }
   .brand{
-    display:flex; align-items:baseline; gap:10px; text-decoration:none;
+    display:flex; align-items:center; gap:10px; text-decoration:none;
   }
-  .brand-mark{
-    font-family:var(--display); font-weight:700; font-size:19px; letter-spacing:0.02em;
-    color:var(--cream);
+  .brand-logo{
+    height:32px; width:auto; display:block;
   }
   .brand-tool{
     font-family:var(--mono); font-size:11px; letter-spacing:0.12em; text-transform:uppercase;
-    color:var(--brick-bright); border:1px solid var(--brick-dark); padding:3px 8px; border-radius:2px;
+    color:#ffffff; background:var(--brick); border:1px solid var(--brick-dark); padding:3px 8px; border-radius:2px;
   }
   .topbar-link{
     font-family:var(--mono); font-size:12px; letter-spacing:0.06em; text-decoration:none;
@@ -92,7 +88,7 @@
   }
   .hero-eyebrow{
     font-family:var(--mono); font-size:12px; letter-spacing:0.14em; text-transform:uppercase;
-    color:var(--brick-bright); margin:0 0 16px;
+    color:var(--brick-dark); margin:0 0 16px;
   }
   .hero h1{
     font-family:var(--display); font-weight:700; font-size:clamp(32px, 5vw, 52px);
@@ -152,7 +148,7 @@
   .dropzone .dz-sub{ font-size:13px; max-width:34ch; }
   .dropzone input{ display:none; }
   .btn-inline{
-    font-family:var(--mono); font-size:12px; letter-spacing:0.05em; color:var(--brick-bright);
+    font-family:var(--mono); font-size:12px; letter-spacing:0.05em; color:var(--brick-dark);
     text-decoration:underline; text-underline-offset:3px;
   }
 
@@ -181,7 +177,7 @@
     padding:7px 12px; border-radius:2px; cursor:pointer; transition:all .15s;
   }
   .tool-btn:hover{ color:var(--cream); border-color:var(--sand); }
-  .tool-btn.danger:hover{ color:var(--brick-bright); border-color:var(--brick); }
+  .tool-btn.danger:hover{ color:var(--brick-dark); border-color:var(--brick); }
   .tool-btn.on{ color:var(--bg); background:var(--sand); border-color:var(--sand); }
   .stage-hint{
     font-size:12px; color:var(--muted); padding:0 20px 16px; margin:0;
@@ -197,7 +193,11 @@
 
   .product-grid{
     display:grid; grid-template-columns:repeat(4, 1fr); gap:8px;
+    max-height:420px; overflow-y:auto; padding-right:4px;
+    scrollbar-width:thin; scrollbar-color:var(--line-bright) transparent;
   }
+  .product-grid::-webkit-scrollbar{ width:6px; }
+  .product-grid::-webkit-scrollbar-thumb{ background:var(--line-bright); border-radius:3px; }
   @media (max-width:420px){ .product-grid{ grid-template-columns:repeat(3,1fr); } }
   .product-swatch{
     position:relative; aspect-ratio:1; border-radius:2px; overflow:hidden; cursor:pointer;
@@ -207,7 +207,7 @@
   .product-swatch.selected{ border-color:var(--brick-bright); }
   .product-swatch.selected::after{
     content:"✓"; position:absolute; top:3px; right:3px; width:16px; height:16px;
-    background:var(--brick-bright); color:var(--bg); font-size:10px; font-weight:700;
+    background:var(--brick-dark); color:#ffffff; font-size:10px; font-weight:700;
     display:flex; align-items:center; justify-content:center; border-radius:50%;
   }
   .product-name{
@@ -249,7 +249,7 @@
 
   .spinner{
     width:16px; height:16px; border-radius:50%;
-    border:2px solid rgba(242,233,220,0.3); border-top-color:var(--cream);
+    border:2px solid rgba(28,24,21,0.2); border-top-color:var(--cream);
     animation:spin .7s linear infinite; display:none;
   }
   .generate-btn.loading .spinner{ display:inline-block; }
@@ -298,7 +298,7 @@
   .tag{
     position:absolute; top:14px; font-family:var(--mono); font-size:10.5px; letter-spacing:0.1em;
     text-transform:uppercase; padding:5px 10px; border-radius:2px; background:rgba(16,13,11,0.75);
-    color:var(--cream); backdrop-filter:blur(3px);
+    color:#ffffff; backdrop-filter:blur(3px);
   }
   .tag.before{ left:14px; }
   .tag.after{ right:14px; }
@@ -315,8 +315,9 @@
 
   /* ---------- footer ---------- */
   footer{
-    border-top:1px solid var(--line); padding:28px; text-align:center;
+    border-top:1px solid var(--line); padding:32px 28px; text-align:center;
   }
+  footer .footer-logo{ height:26px; width:auto; display:block; margin:0 auto 14px; opacity:0.85; }
   footer a{ font-family:var(--mono); font-size:12px; color:var(--muted); text-decoration:none; }
   footer a:hover{ color:var(--sand); }
 </style>
@@ -325,7 +326,7 @@
 
 <div class="topbar">
   <a href="https://starecegly.com" class="brand">
-    <span class="brand-mark">Stare Cegły</span>
+    <img src="logo.png" alt="Stare Cegły" class="brand-logo">
     <span class="brand-tool">Wizualizator</span>
   </a>
   <a href="https://starecegly.com" class="topbar-link">← wróć do sklepu starecegly.com</a>
@@ -467,6 +468,7 @@
 </div>
 
 <footer>
+  <img src="logo.png" alt="Stare Cegły" class="footer-logo">
   <a href="https://starecegly.com">starecegly.com</a> · Toruń, ul. Polna 65
 </footer>
 
@@ -474,7 +476,7 @@
 (function(){
   "use strict";
 
-  // ---- product catalogue (real Stare Cegły products) ----
+  // ---- product catalogue (real Stare Cegły products, całą ofertą płytek) ----
   const PRODUCTS = [
     {
       id: "cut-brick-classic",
@@ -503,6 +505,202 @@
       sub: "lico klasyczne",
       img: "https://starecegly.com/environment/cache/images/productGfx_5049_300_300/Ceglane-plytki-Stara-cegla-Cegla-na-sciane-lico--klasyczne-Wulkaniczna.webp?overlay=1",
       desc: "ciemna, grafitowo-antracytowa płytka z lica starej cegły o wulkanicznym, głębokim kolorze"
+    },
+    {
+      id: "lico-klasyczne-mix",
+      name: "Lico Klasyczne MIX",
+      sub: "lico klasyczne",
+      img: "https://starecegly.com/environment/cache/images/productGfx_6704_300_300/Plytki-z-cegly-rozbiorkowej---Klasyczny-MIX---zdjecie-glowne.webp?overlay=1",
+      desc: "mieszanka kilku naturalnych odcieni czerwieni i beżu z lica starej cegły, efekt zróżnicowanej, żywej ściany"
+    },
+    {
+      id: "loft-super-slim",
+      name: "Loft Super Slim",
+      sub: "modern line",
+      img: "https://starecegly.com/environment/cache/images/productGfx_6446_300_300/Plytki-dekoracyjne-z-cegly-rozbiorkowej-loft-super-slim-glowne.webp?overlay=1",
+      desc: "smukła, niska płytka w stylu loftowym, ceglasty odcień, subtelna faktura, format wydłużony"
+    },
+    {
+      id: "loft-style",
+      name: "Loft Style",
+      sub: "modern line",
+      img: "https://starecegly.com/environment/cache/images/productGfx_3924_300_300/Plytki-z-cegly-loft-cegla-na-sciane-dekoracyjna.webp?overlay=1",
+      desc: "loftowa płytka o industrialnym, ceglastym charakterze i lekko postarzonej fakturze"
+    },
+    {
+      id: "prowansalski-loft",
+      name: "Prowansalski Loft",
+      sub: "modern line",
+      img: "https://starecegly.com/environment/cache/images/productGfx_6273_300_300/Plytki-z-cegly-na-sciane-prowansalskie-LOFT-sciana-uklad-wozowy-glowne.webp?overlay=1",
+      desc: "jasna, kremowo-beżowa płytka w stylu prowansalskim, delikatna faktura, ciepły łagodny odcień"
+    },
+    {
+      id: "lico-gdanskie-retro",
+      name: "Lico Gdańskie Retro",
+      sub: "retro line",
+      img: "https://starecegly.com/environment/cache/images/productGfx_4815_300_300/Ceglane-plytki-Stara-cegla-Cegla-na-sciane---Plytki-z-cegly---lico-gdanskie-retro-glowne.webp?overlay=1",
+      desc: "ceglasta płytka retro w odcieniach czerwieni i brązu, z widoczną, ręcznie formowaną fakturą"
+    },
+    {
+      id: "lico-torunskie",
+      name: "Lico Toruńskie",
+      sub: "historic line",
+      img: "https://starecegly.com/environment/cache/images/productGfx_3995_300_300/wnetrze-pomieszczenia-barn-door-czarna-rama-cegla-na-scianie-lico-torunskie..webp?overlay=1",
+      desc: "klasyczna czerwono-ceglasta płytka z lica starej cegły, jedna z najpopularniejszych faktur w ofercie"
+    },
+    {
+      id: "lico-torunskie-retro",
+      name: "Lico Toruńskie Retro",
+      sub: "retro line",
+      img: "https://starecegly.com/environment/cache/images/productGfx_6050_300_300/Plytki-ceglane-dekoracyjne-z-cegly-rozbiorkowej-na-sciane-lico-torunskie-retro-zdjecie-glowne.webp?overlay=1",
+      desc: "retro wersja lica toruńskiego, cieplejsze przebarwienia i bardziej wyrazista, postarzona faktura"
+    },
+    {
+      id: "lico-klasyczne",
+      name: "Lico Klasyczne",
+      sub: "historic line",
+      img: "https://starecegly.com/environment/cache/images/productGfx_6382_300_300/ceglane-plytki-stara-cegla-cegla-na-sciane-plytki-z-cegly-lico-klasyczne.webp?overlay=1",
+      desc: "uniwersalna, klasyczna płytka z lica starej cegły w naturalnym, ceglastoczerwonym kolorze"
+    },
+    {
+      id: "lico-klasyczne-retro",
+      name: "Lico Klasyczne RETRO",
+      sub: "retro line",
+      img: "https://starecegly.com/environment/cache/images/productGfx_5560_300_300/Ceglane-plytki-Stara-cegla-Cegla-na-sciane-Plytki-z-cegly-lico-klasyczne-zdjecie-glowne.webp?overlay=1",
+      desc: "retro wariant lica klasycznego, głębsze przebarwienia i wyraźniejsza patyna starej cegły"
+    },
+    {
+      id: "loft-slim",
+      name: "Loft Slim",
+      sub: "modern line",
+      img: "https://starecegly.com/environment/cache/images/productGfx_6029_300_300/Plytki-dekoracyjne-z-cegly-rozbiorkowej-na-sciane-Loft-Slim-aranzacja-zdjecie-ogolne_MIN.webp?overlay=1",
+      desc: "niska, smukła płytka loftowa z cegły rozbiórkowej, ceglasty odcień, subtelna, elegancka faktura"
+    },
+    {
+      id: "lico-klasyczne-pomorskie",
+      name: "Lico Klasyczne Pomorskie",
+      sub: "historic line",
+      img: "https://starecegly.com/environment/cache/images/productGfx_4751_300_300/Ceglane-plytki-Stara-cegla-Cegla-na-sciane---Lico-pomorskie-Plytki-z-cegly---Lico-pomorskie-glowne.webp?overlay=1",
+      desc: "płytka z lica starej cegły o pomorskim charakterze, ciepłe odcienie czerwieni i brązu"
+    },
+    {
+      id: "stary-mur",
+      name: "Stary Mur",
+      sub: "historic line",
+      img: "https://starecegly.com/environment/cache/images/productGfx_3821_300_300/Plytki-z-cegly---stary-mur-2.webp?overlay=1",
+      desc: "płytka imitująca fragment starego muru, zróżnicowana faktura i mocno postarzony charakter"
+    },
+    {
+      id: "glowki-historyczne",
+      name: "Główki – małe płytki historyczne",
+      sub: "historic line",
+      img: "https://starecegly.com/environment/cache/images/productGfx_6207_300_300/glowki-ceglane-plytki-stara-cegla-cegla-na-sciane-plytki-z-cegly-lico-klasyczne-miniatura.webp?overlay=1",
+      desc: "małoformatowa płytka z czoła starej cegły, drobna, gęsta faktura, ceglasty kolor"
+    },
+    {
+      id: "lico-klasyczne-industrialne",
+      name: "Lico Klasyczne Industrialne",
+      sub: "historic line",
+      img: "https://starecegly.com/environment/cache/images/productGfx_4792_300_300/Ceglane-plytki-Stara-cegla-Cegla-na-sciane---Plytki-z-cegly-lico-industrialne-glowne-bez-fugi.webp?overlay=1",
+      desc: "surowa, industrialna płytka z lica starej cegły, mocny, ciemnoceglasty charakter"
+    },
+    {
+      id: "lico-klasyczne-prowansalskie",
+      name: "Lico Klasyczne Prowansalskie",
+      sub: "historic line",
+      img: "https://starecegly.com/environment/cache/images/productGfx_4801_300_300/Ceglane-plytki-Stara-cegla-Cegla-na-sciane---Plytki-z-cegly-lico-prowansalskie-glowne.webp?overlay=1",
+      desc: "jasna, ciepła płytka w stylu prowansalskim z delikatną, naturalną fakturą starej cegły"
+    },
+    {
+      id: "lico-klasyczne-toskanskie",
+      name: "Lico Klasyczne Toskańskie",
+      sub: "historic line",
+      img: "https://starecegly.com/environment/cache/images/productGfx_6044_300_300/Plytki-dekoracyjne-z-cegly-rozbiorkowej-lico-toskanskie-pokoj.webp?overlay=1",
+      desc: "ciepła, słoneczna płytka w toskańskich odcieniach beżu i terakoty"
+    },
+    {
+      id: "lico-prowansalskie-retro",
+      name: "Lico Prowansalskie Retro",
+      sub: "retro line",
+      img: "https://starecegly.com/environment/cache/images/productGfx_5322_300_300/Plytki-z-cegly-na-sciane-Lico-prowansalskie-Retro-zdjecie-glowne.webp?overlay=1",
+      desc: "retro wariant lica prowansalskiego, jasna, delikatna faktura z ciepłym odcieniem"
+    },
+    {
+      id: "lico-klasyczne-premium",
+      name: "Lico Klasyczne Premium",
+      sub: "historic line",
+      img: "https://starecegly.com/environment/cache/images/productGfx_6059_300_300/Plytki-dekoracyjne-z-cegly-rozbiorkowej-na-sciane-lico-klasyczne-premium.webp?overlay=1",
+      desc: "płytka premium z lica starej cegły, wyrazista faktura i głęboki, ceglasty kolor"
+    },
+    {
+      id: "lico-klasyczne-limitowana",
+      name: "Lico Klasyczne do 30 cm – Edycja Limitowana",
+      sub: "historic line",
+      img: "https://starecegly.com/environment/cache/images/productGfx_4799_300_300/Ceglane-plytki-Stara-cegla-Cegla-na-sciane---Plytki-z-cegly-lico-klasyczne-do-30-cm-EDYCJA-LIMITOWANA.webp?overlay=1",
+      desc: "limitowana, wydłużona płytka z lica starej cegły, ceglastoczerwony kolor z naturalnymi przebarwieniami"
+    },
+    {
+      id: "jodla-chevron",
+      name: "Jodła Chevron",
+      sub: "historic line",
+      img: "https://starecegly.com/environment/cache/images/productGfx_4800_300_300/Ceglane-plytki-Stara-cegla-Cegla-na-sciane---Plytki-z-cegly-lico-Jodla-Chevron.webp?overlay=1",
+      desc: "płytka z cegły przycięta pod kątem do układu w jodełkę (chevron), ceglasty odcień"
+    },
+    {
+      id: "stary-mur-prowansalski",
+      name: "Stary Mur Prowansalski",
+      sub: "historic line",
+      img: "https://starecegly.com/environment/cache/images/productGfx_3267_300_300/Ceglane-plytki-Stara-cegla-Cegla-na-sciane---Plytki-z-cegly---stary-mur-prowansalski.webp?overlay=1",
+      desc: "jasna wersja starego muru w stylu prowansalskim, delikatna, kremowo-beżowa faktura"
+    },
+    {
+      id: "historic-classic-podloga",
+      name: "Historic Classic – płytki podłogowe",
+      sub: "podłoga / taras",
+      img: "https://starecegly.com/environment/cache/images/productGfx_6860_300_300/Plytki-podlogowe-z-cegly-historyczne_MIN.webp?overlay=1",
+      desc: "podłogowa płytka z historycznej cegły, ceglastoczerwony kolor, gęsta, trwała faktura"
+    },
+    {
+      id: "pustynny-bez-podloga",
+      name: "Pustynny Beż – płytki podłogowe",
+      sub: "podłoga / taras",
+      img: "https://starecegly.com/environment/cache/images/productGfx_6070_300_300/Plytki-dekoracyjne-z-cegly-rozbiorkowej-pustynny-bez-2_MIN.webp?overlay=1",
+      desc: "jasna, piaskowo-beżowa płytka podłogowa z historycznej cegły, ciepły pustynny odcień"
+    },
+    {
+      id: "terakota-loft-podloga",
+      name: "Terakota Loft – płytki podłogowe",
+      sub: "podłoga / taras",
+      img: "https://starecegly.com/environment/cache/images/productGfx_5428_300_300/historyczna-cegla-plytki-podlogowe-ogolny.webp?overlay=1",
+      desc: "podłogowa płytka w odcieniu terakoty, ciepły, czerwono-pomarańczowy kolor starej cegły"
+    },
+    {
+      id: "fat-brick",
+      name: "Fat Brick – podłogi i ściany",
+      sub: "podłoga / ściana",
+      img: "https://starecegly.com/environment/cache/images/productGfx_5508_300_300/plytki-z-cegly-fat-brick-grube-cegla-rozbiorkowa-na-podloge-sciane-elewacje-glowne.webp?overlay=1",
+      desc: "gruba, masywna płytka z cegły rozbiórkowej, wyrazista faktura, uniwersalna do ścian i podłóg"
+    },
+    {
+      id: "lico-kujawskie",
+      name: "Lico Kujawskie",
+      sub: "rustic line",
+      img: "https://starecegly.com/environment/cache/images/productGfx_6119_300_300/lico-kujawskie-4k-ultra-Firefly-Upscaler%2C-skala-4x_MIN.webp?overlay=1",
+      desc: "betonowa płytka stylizowana na starą cegłę, równomierny ceglasty kolor, rustykalna faktura"
+    },
+    {
+      id: "lico-kujawskie-industrialne",
+      name: "Lico Kujawskie Industrialne",
+      sub: "rustic line",
+      img: "https://starecegly.com/environment/cache/images/productGfx_6121_300_300/Plytka-ceglana-lico-kujawskie-Industrialne-1x1NEW_MIN.webp?overlay=1",
+      desc: "ciemna, industrialna odmiana lica kujawskiego, surowy, grafitowo-ceglasty charakter"
+    },
+    {
+      id: "lico-kujawskie-toskanskie",
+      name: "Lico Kujawskie Toskańskie",
+      sub: "rustic line",
+      img: "https://starecegly.com/environment/cache/images/productGfx_6127_300_300/Plytka-ceglana-lico-kujawskie-Toskanskie-1x1C_MIN.webp?overlay=1",
+      desc: "jasna, toskańska odmiana lica kujawskiego, ciepłe odcienie beżu i piasku"
     }
   ];
 
