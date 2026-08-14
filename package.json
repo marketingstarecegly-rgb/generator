@@ -1,0 +1,9 @@
+{
+  "name": "stare-cegly-wizualizator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Wizualizator płytek z cegły dla starecegly.com — frontend + serverless proxy do Gemini 2.5 Flash Image.",
+  "engines": {
+    "node": "20.x"
+  }
+}
