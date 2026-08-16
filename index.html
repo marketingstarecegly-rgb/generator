@@ -1119,8 +1119,26 @@
     mortarColor: "biala",
     imageDataUrl: null,
     imageNaturalW: 0,
-    imageNaturalH: 0
+    imageNaturalH: 0,
+    customerId: null
   };
+
+  // ---- identyfikacja klienta Shoper (do limitu dziennych generowań) ----
+  // Sposób 1: parametr w adresie URL ramki, np. wizualizator.html?customerId=123
+  //           (Shoper renderuje to w szablonie .tpl, np. src="...?customerId={$user->user->getId()}")
+  // Sposób 2: postMessage z okna nadrzędnego (jeśli wizualizator jest w <iframe> na starecegly.com)
+  //           window.parent.postMessage({type: "stare-cegly-auth", customerId: "123"}, "https://twoja-domena.vercel.app")
+  (function initCustomerId(){
+    try{
+      const urlId = new URLSearchParams(window.location.search).get("customerId");
+      if(urlId && urlId.trim()) state.customerId = urlId.trim();
+    }catch(err){ /* ignoruj */ }
+  })();
+  window.addEventListener("message", (e) => {
+    if(e.data && e.data.type === "stare-cegly-auth" && e.data.customerId){
+      state.customerId = String(e.data.customerId).trim();
+    }
+  });
 
   // ---- render product accordion (grouped, collapsible list) ----
   const GROUP_ORDER = [
@@ -1413,7 +1431,8 @@
         surface: state.surface,
         layout: state.layout,
         mount: state.mount,
-        mortarColor: state.mount === "bez-fugi" ? null : state.mortarColor
+        mortarColor: state.mount === "bez-fugi" ? null : state.mortarColor,
+        customerId: state.customerId || null
       };
 
       const res = await fetch("/api/generate", {
@@ -1424,6 +1443,11 @@
 
       if(!res.ok){
         const err = await res.json().catch(() => ({}));
+        if(err.limitReached){
+          errorBox.textContent = err.error;
+          errorBox.classList.add("show");
+          return;
+        }
         throw new Error(err.error || `Błąd serwera (${res.status})`);
       }
       const data = await res.json();
@@ -1433,7 +1457,10 @@
 
       beforeImg.src = originalDataUrl;
       afterImg.src = data.image;
-      resultMeta.textContent = `${product.name} · ${labelFor(state.surface)} · ${labelFor(state.mount)}`;
+      const remainingNote = (data.remaining !== null && data.remaining !== undefined)
+        ? ` · pozostało dziś: ${data.remaining}/${data.limit}`
+        : "";
+      resultMeta.textContent = `${product.name} · ${labelFor(state.surface)} · ${labelFor(state.mount)}${remainingNote}`;
       downloadBtn.href = data.image;
       resultWrap.classList.add("show");
       resultWrap.scrollIntoView({behavior:"smooth", block:"start"});
