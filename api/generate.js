@@ -214,6 +214,7 @@ Zasady krytyczne:
 - Dopasuj cień, kierunek światła i odbicia na nowej okładzinie tak, by pasowały do oświetlenia sceny na oryginalnym zdjęciu.
 - Zachowaj naturalne, realistyczne przejścia na krawędziach zaznaczonego obszaru — bez twardych, sztucznych linii cięcia.
 - Cała zaznaczona powierzchnia ma być pokryta JEDNOLITĄ okładziną — bez ramek, obwódek, listew, podziału na panele lub sekcje, chyba że wynika to wyłącznie z naturalnego układu płytek opisanego wyżej.
+- KRYTYCZNE — BRAK BIAŁYCH/JASNYCH OBWÓDEK WOKÓŁ OTWORÓW: jeśli w zaznaczonym obszarze znajdują się okna, drzwi lub inne otwory, okładzina z cegły MUSI sięgać dokładnie do ich krawędzi (do ramy okna/drzwi), bez żadnego niepomalowanego, jasnego, białego lub pustego paska/obwódki pozostawionego między cegłą a otworem. To bardzo częsty błąd do uniknięcia — sprawdź dokładnie każdą krawędź otworu w zaznaczonym obszarze przed zakończeniem generowania. Jedyna dozwolona "ramka" to prawdziwa, fizyczna framuga/ościeżnica okna lub drzwi, jeśli była widoczna na oryginalnym zdjęciu — nic ponad to.
 - Nie dodawaj znaków wodnych, tekstu ani elementów graficznych spoza sceny.
 - Wygeneruj wyłącznie finalny, fotorealistyczny obraz wynikowy.
 
@@ -221,7 +222,8 @@ PODSUMOWANIE — sprawdź przed wygenerowaniem, że wynik spełnia WSZYSTKIE pon
 1. Produkt: ${productName} (${productDescription || "naturalna faktura cegły"}).
 2. Układ: ${layoutLabel}.${(layout === "jodelka" || layout === "mieszanka") ? " Sprawdź jeszcze raz: to NIE ma być zwykły poziomy układ z przesunięciem, nawet jeśli zdjęcie referencyjne produktu tak sugeruje." : ""}
 3. ${mount === "bez-fugi" ? "Brak fugi między płytkami." : `Fuga WIDOCZNA, w kolorze: ${mortarColorLabel}.`}
-${productDims ? `4. Proporcje pojedynczej płytki: ${productDims}${productShapeHint ? ` — ${productShapeHint}` : ""}.\n5. Jednolita okładzina bez dodatkowych ramek/podziałów.\n6. Reszta zdjęcia (poza zaznaczonym obszarem) bez zmian.` : "4. Jednolita okładzina bez dodatkowych ramek/podziałów.\n5. Reszta zdjęcia (poza zaznaczonym obszarem) bez zmian."}`
+4. Brak białych/jasnych, niepomalowanych obwódek wokół okien, drzwi lub innych otworów w zaznaczonym obszarze — cegła sięga dokładnie do ich krawędzi.
+${productDims ? `5. Proporcje pojedynczej płytki: ${productDims}${productShapeHint ? ` — ${productShapeHint}` : ""}.\n6. Jednolita okładzina bez dodatkowych ramek/podziałów.\n7. Reszta zdjęcia (poza zaznaczonym obszarem) bez zmian.` : "5. Jednolita okładzina bez dodatkowych ramek/podziałów.\n6. Reszta zdjęcia (poza zaznaczonym obszarem) bez zmian."}`
     });
 
     promptParts.push({ text: "Zdjęcie oryginalne:" });
