@@ -1,9 +1,60 @@
 // /api/generate.js
 // Vercel Serverless Function — proxy do Gemini 2.5 Flash Image ("Nano Banana")
 // Wymaga zmiennej środowiskowej GEMINI_API_KEY ustawionej w Vercel (Project Settings → Environment Variables).
+//
+// Limity dziennego generowania (niezalogowani: 1/dzień po IP, zalogowani: 5/dzień po ID klienta)
+// wymagają dodatkowo zmiennych UPSTASH_REDIS_REST_URL i UPSTASH_REDIS_REST_TOKEN
+// (darmowe konto na https://upstash.com — Redis REST, bez potrzeby żadnej biblioteki npm).
+// Jeśli te zmienne nie są ustawione, limity są wyłączone (tryb "fail-open") — narzędzie
+// działa normalnie, ale bez ograniczeń liczby generowań.
 
 const GEMINI_MODEL = "gemini-2.5-flash-image";
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+
+const LIMIT_ANONYMOUS = 1;
+const LIMIT_LOGGED_IN = 5;
+const LIMIT_TTL_SECONDS = 26 * 3600; // ok. 26h — margines na strefy czasowe, licznik i tak resetuje się raz na dobę
+
+const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
+const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+function getClientIp(req){
+  const fwd = req.headers["x-forwarded-for"];
+  if(fwd) return String(fwd).split(",")[0].trim();
+  return (req.socket && req.socket.remoteAddress) || "unknown";
+}
+
+async function upstashCommand(pathSegments){
+  const url = `${UPSTASH_URL}/${pathSegments.map(encodeURIComponent).join("/")}`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${UPSTASH_TOKEN}` } });
+  if(!res.ok) throw new Error(`Upstash error ${res.status}`);
+  return res.json();
+}
+
+// Sprawdza i zwiększa licznik generowań dla danego klucza. Zwraca informację,
+// czy żądanie mieści się w dziennym limicie.
+async function checkAndIncrementLimit(key, limit){
+  if(!UPSTASH_URL || !UPSTASH_TOKEN){
+    // Brak konfiguracji Redis — limity wyłączone (fail-open), narzędzie działa bez ograniczeń.
+    return { allowed: true, remaining: null, configured: false };
+  }
+  try{
+    const incrData = await upstashCommand(["incr", key]);
+    const count = incrData.result;
+    if(count === 1){
+      // pierwsze użycie w tym okresie rozliczeniowym — ustaw wygaśnięcie klucza
+      await upstashCommand(["expire", key, String(LIMIT_TTL_SECONDS)]);
+    }
+    if(count > limit){
+      return { allowed: false, remaining: 0, count, configured: true };
+    }
+    return { allowed: true, remaining: limit - count, count, configured: true };
+  }catch(err){
+    console.error("Błąd limitowania (Upstash):", err);
+    // W razie awarii usługi limitów nie blokujemy generowania (fail-open).
+    return { allowed: true, remaining: null, configured: true, error: true };
+  }
+}
 
 const SURFACE_LABELS = {
   "elewacja": "elewację budynku (zewnętrzną ścianę)",
@@ -17,6 +68,14 @@ const LAYOUT_LABELS = {
   "prosty": "prosty, równoległy układ bez przesunięcia",
   "mieszanka": "naturalną, nieregularną mieszankę formatów i odcieni",
   "jodelka": "układ w jodełkę"
+};
+
+const MORTAR_COLOR_LABELS = {
+  "biala": "biała (czysta, jasna, jasnoszaro-biała fuga betonowa, wyraźnie jaśniejsza niż otaczające płytki)",
+  "stara-biel": "stara biel (przygaszona, lekko szarawa biel z delikatnym beżowym odcieniem, jak stary, naturalnie zabrudzony beton)",
+  "piaskowa": "piaskowa (ciepły, beżowo-piaskowy odcień, zbliżony do koloru piasku lub jasnego beżu)",
+  "szara": "szara (średni, stonowany szary, wyraźnie ciemniejszy niż biała czy piaskowa fuga)",
+  "antracytowa": "antracytowa (bardzo ciemny, prawie czarny odcień antracytu — wyraźnie ciemniejsza niż płytki)"
 };
 
 function dataUrlToInlineData(dataUrl){
@@ -51,12 +110,33 @@ module.exports = async (req, res) => {
       highlightedImage,
       productName,
       productDescription,
+      productDims,
+      productShapeHint,
       productImage,
       surface,
       layout,
       mount,
-      mortarColor
+      mortarColor,
+      customerId
     } = req.body || {};
+
+    // ---- limit dziennych generowań ----
+    const isLoggedIn = !!(customerId && String(customerId).trim());
+    const identity = isLoggedIn ? `cust:${String(customerId).trim()}` : `ip:${getClientIp(req)}`;
+    const limit = isLoggedIn ? LIMIT_LOGGED_IN : LIMIT_ANONYMOUS;
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
+    const rlKey = `wizualizator:${identity}:${today}`;
+
+    const rl = await checkAndIncrementLimit(rlKey, limit);
+    if(!rl.allowed){
+      return res.status(429).json({
+        error: isLoggedIn
+          ? `Wykorzystałeś dzienny limit ${LIMIT_LOGGED_IN} generowań na dziś. Wróć jutro, żeby stworzyć kolejne wizualizacje.`
+          : `Wykorzystałeś swoją bezpłatną, jednorazową wizualizację na dziś. Zaloguj się na swoje konto na starecegly.com, żeby mieć dostęp do ${LIMIT_LOGGED_IN} generowań dziennie.`,
+        limitReached: true,
+        loggedIn: isLoggedIn
+      });
+    }
 
     if(!originalImage || !highlightedImage || !productName){
       return res.status(400).json({ error: "Brak wymaganych danych wejściowych (zdjęcie, zaznaczenie lub produkt)." });
@@ -79,16 +159,33 @@ module.exports = async (req, res) => {
 
     const surfaceLabel = SURFACE_LABELS[surface] || "wskazaną powierzchnię";
     const layoutLabel = LAYOUT_LABELS[layout] || "naturalny układ";
+    const mortarColorLabel = MORTAR_COLOR_LABELS[mortarColor] || MORTAR_COLOR_LABELS["biala"];
 
-    const mountSentence = mount === "bez-fugi"
-      ? "Płytki mają być ułożone bez fugi, ściśle przy sobie, bez widocznych spoin."
-      : `Płytki mają być montowane z widoczną fugą w kolorze ${mortarColor || "jasnoszarym"}, o szerokości typowej dla płytek z cegły (ok. 1–1.5 cm).`;
+    const mountLine = mount === "bez-fugi"
+      ? "Montaż BEZ FUGI: płytki ułożone ściśle przy sobie, bez żadnych widocznych spoin ani przerw między płytkami."
+      : "Montaż Z FUGĄ: między płytkami musi być wyraźnie widoczna spoina o szerokości ok. 1–1.5 cm.";
+
+    const mortarColorLine = mount === "bez-fugi"
+      ? ""
+      : `\n- KOLOR FUGI (bardzo ważne, zastosuj dokładnie): fuga musi mieć kolor ${mortarColorLabel}. To kluczowy parametr — nie zastępuj go domyślnym ani innym odcieniem.`;
+
+    const dimsLine = productDims
+      ? `\n- WYMIARY I PROPORCJE POJEDYNCZEJ PŁYTKI (krytycznie ważne, zastosuj dokładnie): ${productDims}. NIE renderuj standardowych proporcji cegły (ok. 2:1) — moduł MUSI być wyraźnie bardziej wydłużony i płaski, zgodnie z podanymi proporcjami. To najczęstszy błąd do uniknięcia: zbyt "kwadratowe" lub zbyt wysokie płytki są NIEPOPRAWNE dla tego produktu.`
+      : "";
+
+    const shapeAlert = productShapeHint
+      ? `UWAGA — NIETYPOWY FORMAT PŁYTKI, PRZECZYTAJ PRZED WYKONANIEM ZADANIA:
+Ten produkt NIE ma proporcji zwykłej cegły. ${productShapeHint} Jeśli narysujesz moduły o standardowych proporcjach cegły (ok. 2:1), wynik będzie BŁĘDNY — musi być wyraźnie więcej wąskich, poziomych rzędów niż w typowym murze z cegły. Jeśli załączone zdjęcie referencyjne produktu nie pokazuje tego jednoznacznie (np. kadr jest zbyt przybliżony), kieruj się przede wszystkim tym opisem proporcji, a nie domysłem na podstawie samego kadru.
+WAŻNE: mimo wydłużonego formatu, cała zaznaczona powierzchnia MA WYGLĄDAĆ JAK JEDNOLITA OKŁADZINA Z PŁYTEK — tak jak każda inna cegła na tej ścianie. NIE dodawaj żadnych ramek, obwódek, listew wykończeniowych, podziałów na panele/sekcje ani żadnych elementów, o które nie proszono. To ma być zwykła, ciągła okładzina ceglana, tylko z płytkami o innych proporcjach.
+
+`
+      : "";
 
     const promptParts = [];
 
     promptParts.push({
       text:
-`Jesteś precyzyjnym narzędziem do fotorealistycznej wizualizacji materiałów budowlanych na zdjęciach architektonicznych.
+`${shapeAlert}Jesteś precyzyjnym narzędziem do fotorealistycznej wizualizacji materiałów budowlanych na zdjęciach architektonicznych.
 
 Otrzymujesz dwa zdjęcia:
 1. Oryginalne zdjęcie ściany/elewacji.
@@ -98,18 +195,25 @@ Twoje zadanie:
 Zastąp WYŁĄCZNIE podświetlony obszar realistyczną okładziną z płytek z cegły "${productName}". Opis materiału: ${productDescription || "płytka z cegły o naturalnej, nieregularnej fakturze"}.
 ${productInline ? "Dołączam też osobne zdjęcie referencyjne samego materiału/tekstury — dopasuj kolor, fakturę i charakter cegły dokładnie do tego wzorca." : ""}
 
-Zastosuj:
+Zastosuj dokładnie następujące parametry:
 - Powierzchnia: ${surfaceLabel}.
 - Układ cegły: ${layoutLabel}.
-- ${mountSentence}
+- ${mountLine}${mortarColorLine}${dimsLine}
 
 Zasady krytyczne:
 - Usuń całkowicie pomarańczową nakładkę z wyniku — finalny obraz ma wyglądać jak naturalna, niezmodyfikowana fotografia, BEZ śladu podświetlenia.
 - Zachowaj dokładnie oryginalną perspektywę, kąt kamery, proporcje budynku oraz wszystkie elementy poza zaznaczonym obszarem (okna, drzwi, rynny, otoczenie, niebo, oświetlenie) bez zmian.
 - Dopasuj cień, kierunek światła i odbicia na nowej okładzinie tak, by pasowały do oświetlenia sceny na oryginalnym zdjęciu.
 - Zachowaj naturalne, realistyczne przejścia na krawędziach zaznaczonego obszaru — bez twardych, sztucznych linii cięcia.
+- Cała zaznaczona powierzchnia ma być pokryta JEDNOLITĄ okładziną — bez ramek, obwódek, listew, podziału na panele lub sekcje, chyba że wynika to wyłącznie z naturalnego układu płytek opisanego wyżej.
 - Nie dodawaj znaków wodnych, tekstu ani elementów graficznych spoza sceny.
-- Wygeneruj wyłącznie finalny, fotorealistyczny obraz wynikowy.`
+- Wygeneruj wyłącznie finalny, fotorealistyczny obraz wynikowy.
+
+PODSUMOWANIE — sprawdź przed wygenerowaniem, że wynik spełnia WSZYSTKIE poniższe punkty:
+1. Produkt: ${productName} (${productDescription || "naturalna faktura cegły"}).
+2. Układ: ${layoutLabel}.
+3. ${mount === "bez-fugi" ? "Brak fugi między płytkami." : `Fuga WIDOCZNA, w kolorze: ${mortarColorLabel}.`}
+${productDims ? `4. Proporcje pojedynczej płytki: ${productDims}${productShapeHint ? ` — ${productShapeHint}` : ""}.\n5. Jednolita okładzina bez dodatkowych ramek/podziałów.\n6. Reszta zdjęcia (poza zaznaczonym obszarem) bez zmian.` : "4. Jednolita okładzina bez dodatkowych ramek/podziałów.\n5. Reszta zdjęcia (poza zaznaczonym obszarem) bez zmian."}`
     });
 
     promptParts.push({ text: "Zdjęcie oryginalne:" });
@@ -150,7 +254,12 @@ Zasady krytyczne:
     const mime = imagePart.inlineData.mimeType || "image/png";
     const b64 = imagePart.inlineData.data;
 
-    return res.status(200).json({ image: `data:${mime};base64,${b64}` });
+    return res.status(200).json({
+      image: `data:${mime};base64,${b64}`,
+      remaining: rl.remaining,
+      limit: limit,
+      loggedIn: isLoggedIn
+    });
 
   }catch(err){
     console.error("Błąd /api/generate:", err);
