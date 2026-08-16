@@ -64,10 +64,10 @@ const SURFACE_LABELS = {
 };
 
 const LAYOUT_LABELS = {
-  "klasyczne-przesuniecie": "klasyczny układ z przesunięciem (jak w tradycyjnym murowaniu, cegła na cegłę z przesunięciem o pół długości)",
-  "prosty": "prosty, równoległy układ bez przesunięcia",
-  "mieszanka": "naturalną, nieregularną mieszankę formatów i odcieni",
-  "jodelka": "układ w jodełkę"
+  "klasyczne-przesuniecie": "klasyczny układ z przesunięciem (running bond) — poziome rzędy cegieł, każdy kolejny rząd przesunięty względem poprzedniego o pół długości cegły, jak w tradycyjnym murowaniu",
+  "prosty": "prosty układ siatkowy (stack bond) — cegły ułożone dokładnie jedna nad drugą w idealnie pionowych i poziomych liniach, BEZ żadnego przesunięcia między rzędami",
+  "mieszanka": "naturalną, nieregularną mieszankę formatów i odcieni — cegły o lekko różnych długościach i szerokościach, ułożone z nieregularnym, przypadkowym przesunięciem (nie idealnie powtarzalnym jak running bond), z widocznym zróżnicowaniem koloru między poszczególnymi sztukami",
+  "jodelka": "UKŁAD W JODEŁKĘ (herringbone) — cegły ułożone POD KĄTEM (zwykle 45° lub 90° względem siebie) w powtarzający się wzór przypominający litery V/zygzak lub szkielet ryby (jak parkiet w jodełkę). To NIE są poziome rzędy — każda cegła stoi ukośnie względem sąsiednich, tworząc charakterystyczny, geometryczny, ukośny wzór na całej powierzchni. Jeśli wynik pokazuje zwykłe poziome rzędy cegieł, to jest BŁĄD."
 };
 
 const MORTAR_COLOR_LABELS = {
@@ -181,11 +181,19 @@ WAŻNE: mimo wydłużonego formatu, cała zaznaczona powierzchnia MA WYGLĄDAĆ 
 `
       : "";
 
+    const layoutAlert = (layout === "jodelka" || layout === "mieszanka")
+      ? `UWAGA — NIESTANDARDOWY UKŁAD UŁOŻENIA CEGŁY, PRZECZYTAJ PRZED WYKONANIEM ZADANIA:
+Użytkownik wybrał układ: ${layoutLabel}
+Załączone zdjęcie referencyjne produktu prawdopodobnie pokazuje cegłę ułożoną w zwykły, poziomy sposób (running bond) — to zdjęcie ma służyć WYŁĄCZNIE jako wzorzec KOLORU, FAKTURY i CHARAKTERU materiału. CAŁKOWICIE ZIGNORUJ sposób ułożenia/wzór widoczny na tym zdjęciu referencyjnym. Układ ułożenia na finalnym obrazie musi być zgodny wyłącznie z opisem: ${layoutLabel}. Jeśli wynik będzie pokazywał zwykłe poziome rzędy zamiast opisanego układu, to jest BŁĄD — sprawdź to przed zakończeniem generowania.
+
+`
+      : "";
+
     const promptParts = [];
 
     promptParts.push({
       text:
-`${shapeAlert}Jesteś precyzyjnym narzędziem do fotorealistycznej wizualizacji materiałów budowlanych na zdjęciach architektonicznych.
+`${shapeAlert}${layoutAlert}Jesteś precyzyjnym narzędziem do fotorealistycznej wizualizacji materiałów budowlanych na zdjęciach architektonicznych.
 
 Otrzymujesz dwa zdjęcia:
 1. Oryginalne zdjęcie ściany/elewacji.
@@ -211,7 +219,7 @@ Zasady krytyczne:
 
 PODSUMOWANIE — sprawdź przed wygenerowaniem, że wynik spełnia WSZYSTKIE poniższe punkty:
 1. Produkt: ${productName} (${productDescription || "naturalna faktura cegły"}).
-2. Układ: ${layoutLabel}.
+2. Układ: ${layoutLabel}.${(layout === "jodelka" || layout === "mieszanka") ? " Sprawdź jeszcze raz: to NIE ma być zwykły poziomy układ z przesunięciem, nawet jeśli zdjęcie referencyjne produktu tak sugeruje." : ""}
 3. ${mount === "bez-fugi" ? "Brak fugi między płytkami." : `Fuga WIDOCZNA, w kolorze: ${mortarColorLabel}.`}
 ${productDims ? `4. Proporcje pojedynczej płytki: ${productDims}${productShapeHint ? ` — ${productShapeHint}` : ""}.\n5. Jednolita okładzina bez dodatkowych ramek/podziałów.\n6. Reszta zdjęcia (poza zaznaczonym obszarem) bez zmian.` : "4. Jednolita okładzina bez dodatkowych ramek/podziałów.\n5. Reszta zdjęcia (poza zaznaczonym obszarem) bez zmian."}`
     });
