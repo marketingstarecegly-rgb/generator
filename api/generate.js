@@ -11,6 +11,27 @@
 const GEMINI_MODEL = "gemini-2.5-flash-image";
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
+const sharp = require("sharp");
+
+// Model ma silny, wyuczony "domyślny" schemat proporcji cegły (ok. 2–2.5:1).
+// Dla produktów o dużo bardziej wydłużonym formacie (np. seria Long) sama
+// instrukcja tekstowa nie zawsze wystarcza, żeby to przebić — model kieruje się
+// głównie tym, co "widzi" na zdjęciu referencyjnym. Dlatego fizycznie ściskamy
+// zdjęcie referencyjne w pionie o zadany współczynnik, żeby wizualnie
+// wyeksponować prawdziwe proporcje pojedynczej płytki, zamiast polegać
+// wyłącznie na opisie.
+const ASSUMED_DEFAULT_BRICK_RATIO = 2.2;
+
+async function squashImageVertically(buffer, targetAspectRatio){
+  const squashFactor = Math.max(0.1, Math.min(1, ASSUMED_DEFAULT_BRICK_RATIO / targetAspectRatio));
+  const meta = await sharp(buffer).metadata();
+  const newHeight = Math.max(1, Math.round(meta.height * squashFactor));
+  return sharp(buffer)
+    .resize(meta.width, newHeight, { fit: "fill" })
+    .jpeg({ quality: 90 })
+    .toBuffer();
+}
+
 const LIMIT_ANONYMOUS = 1;
 const LIMIT_LOGGED_IN = 5;
 const LIMIT_TTL_SECONDS = 26 * 3600; // ok. 26h — margines na strefy czasowe, licznik i tak resetuje się raz na dobę
@@ -84,13 +105,12 @@ function dataUrlToInlineData(dataUrl){
   return { mimeType: match[1], data: match[2] };
 }
 
-async function fetchImageAsInlineData(url){
+async function fetchImageBuffer(url){
   const res = await fetch(url);
   if(!res.ok) throw new Error(`Nie udało się pobrać obrazu produktu (${res.status})`);
-  const buf = await res.arrayBuffer();
+  const buf = Buffer.from(await res.arrayBuffer());
   const contentType = res.headers.get("content-type") || "image/jpeg";
-  const base64 = Buffer.from(buf).toString("base64");
-  return { mimeType: contentType.split(";")[0], data: base64 };
+  return { buffer: buf, mimeType: contentType.split(";")[0] };
 }
 
 module.exports = async (req, res) => {
@@ -112,6 +132,7 @@ module.exports = async (req, res) => {
       productDescription,
       productDims,
       productShapeHint,
+      productAspectRatio,
       productImage,
       surface,
       layout,
@@ -149,9 +170,26 @@ module.exports = async (req, res) => {
     }
 
     let productInline = null;
+    let imageWasSquashed = false;
     if(productImage){
       try{
-        productInline = await fetchImageAsInlineData(productImage);
+        const { buffer, mimeType } = await fetchImageBuffer(productImage);
+        let finalBuffer = buffer;
+        let finalMimeType = mimeType;
+
+        const ratio = Number(productAspectRatio);
+        if(ratio && ratio > ASSUMED_DEFAULT_BRICK_RATIO * 1.15){
+          try{
+            finalBuffer = await squashImageVertically(buffer, ratio);
+            finalMimeType = "image/jpeg";
+            imageWasSquashed = true;
+          }catch(squashErr){
+            console.error("Błąd ściskania obrazu referencyjnego:", squashErr);
+            // kontynuuj z oryginalnym, nieściśniętym obrazem
+          }
+        }
+
+        productInline = { mimeType: finalMimeType, data: finalBuffer.toString("base64") };
       }catch(e){
         productInline = null; // kontynuuj bez wzorca wizualnego, opieramy się na opisie tekstowym
       }
@@ -201,7 +239,10 @@ Otrzymujesz dwa zdjęcia:
 
 Twoje zadanie:
 Zastąp WYŁĄCZNIE podświetlony obszar realistyczną okładziną z płytek z cegły "${productName}". Opis materiału: ${productDescription || "płytka z cegły o naturalnej, nieregularnej fakturze"}.
-${productInline ? "Dołączam też osobne zdjęcie referencyjne samego materiału/tekstury — dopasuj kolor, fakturę i charakter cegły dokładnie do tego wzorca." : ""}
+${productInline ? (imageWasSquashed
+  ? "Dołączam też osobne zdjęcie referencyjne materiału/tekstury — UWAGA: to zdjęcie zostało CELOWO ściśnięte w pionie, żeby dosłownie pokazać prawdziwe, mocno wydłużone proporcje pojedynczej płytki tego produktu (inaczej niż standardowa cegła). Potraktuj proporcje widoczne na tym zdjęciu jako wiążący wzorzec kształtu modułu — nie prostuj ich z powrotem do standardowych proporcji cegły. Kolor i fakturę również dopasuj do tego wzorca."
+  : "Dołączam też osobne zdjęcie referencyjne samego materiału/tekstury — dopasuj kolor, fakturę i charakter cegły dokładnie do tego wzorca."
+) : ""}
 
 Zastosuj dokładnie następujące parametry:
 - Powierzchnia: ${surfaceLabel}.

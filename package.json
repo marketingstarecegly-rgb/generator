@@ -5,5 +5,8 @@
   "description": "Wizualizator płytek z cegły dla starecegly.com — frontend + serverless proxy do Gemini 2.5 Flash Image.",
   "engines": {
     "node": "20.x"
+  },
+  "dependencies": {
+    "sharp": "^0.33.5"
   }
 }
