@@ -8,29 +8,13 @@
 // Jeśli te zmienne nie są ustawione, limity są wyłączone (tryb "fail-open") — narzędzie
 // działa normalnie, ale bez ograniczeń liczby generowań.
 
-const GEMINI_MODEL = "gemini-2.5-flash-image";
-const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
-
-const sharp = require("sharp");
-
-// Model ma silny, wyuczony "domyślny" schemat proporcji cegły (ok. 2–2.5:1).
-// Dla produktów o dużo bardziej wydłużonym formacie (np. seria Long) sama
-// instrukcja tekstowa nie zawsze wystarcza, żeby to przebić — model kieruje się
-// głównie tym, co "widzi" na zdjęciu referencyjnym. Dlatego fizycznie ściskamy
-// zdjęcie referencyjne w pionie o zadany współczynnik, żeby wizualnie
-// wyeksponować prawdziwe proporcje pojedynczej płytki, zamiast polegać
-// wyłącznie na opisie.
-const ASSUMED_DEFAULT_BRICK_RATIO = 2.2;
-
-async function squashImageVertically(buffer, targetAspectRatio){
-  const squashFactor = Math.max(0.1, Math.min(1, ASSUMED_DEFAULT_BRICK_RATIO / targetAspectRatio));
-  const meta = await sharp(buffer).metadata();
-  const newHeight = Math.max(1, Math.round(meta.height * squashFactor));
-  return sharp(buffer)
-    .resize(meta.width, newHeight, { fit: "fill" })
-    .jpeg({ quality: 90 })
-    .toBuffer();
-}
+// Kolejność prób: najpierw nowszy model (lepsze trzymanie się instrukcji wg
+// dokumentacji Google), a w razie jego niedostępności (błędny identyfikator,
+// model jeszcze nie wdrożony na danym koncie, błąd 400/404) automatyczny
+// powrót do sprawdzonego, starszego modelu — żeby awaria nowego modelu nigdy
+// nie wyłączyła całego narzędzia.
+const GEMINI_MODEL_CANDIDATES = ["gemini-3.1-flash-image", "gemini-2.5-flash-image"];
+const GEMINI_ENDPOINT_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
 const LIMIT_ANONYMOUS = 1;
 const LIMIT_LOGGED_IN = 5;
@@ -105,12 +89,13 @@ function dataUrlToInlineData(dataUrl){
   return { mimeType: match[1], data: match[2] };
 }
 
-async function fetchImageBuffer(url){
+async function fetchImageAsInlineData(url){
   const res = await fetch(url);
   if(!res.ok) throw new Error(`Nie udało się pobrać obrazu produktu (${res.status})`);
-  const buf = Buffer.from(await res.arrayBuffer());
+  const buf = await res.arrayBuffer();
   const contentType = res.headers.get("content-type") || "image/jpeg";
-  return { buffer: buf, mimeType: contentType.split(";")[0] };
+  const base64 = Buffer.from(buf).toString("base64");
+  return { mimeType: contentType.split(";")[0], data: base64 };
 }
 
 module.exports = async (req, res) => {
@@ -138,22 +123,32 @@ module.exports = async (req, res) => {
       layout,
       mount,
       mortarColor,
-      customerId
+      customerId,
+      lang
     } = req.body || {};
+
+    const isDE = lang === "de";
 
     // ---- limit dziennych generowań ----
     const isLoggedIn = !!(customerId && String(customerId).trim());
     const identity = isLoggedIn ? `cust:${String(customerId).trim()}` : `ip:${getClientIp(req)}`;
     const limit = isLoggedIn ? LIMIT_LOGGED_IN : LIMIT_ANONYMOUS;
     const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
-    const rlKey = `wizualizator:${identity}:${today}`;
+    const rlKey = `wizualizator:${isDE ? "de" : "pl"}:${identity}:${today}`;
 
     const rl = await checkAndIncrementLimit(rlKey, limit);
     if(!rl.allowed){
+      const messages = isDE
+        ? {
+            loggedIn: `Sie haben Ihr tägliches Limit von ${LIMIT_LOGGED_IN} Visualisierungen für heute erreicht. Kommen Sie morgen wieder, um weitere zu erstellen.`,
+            anonymous: `Sie haben Ihre kostenlose, einmalige Visualisierung für heute genutzt. Melden Sie sich bei Ihrem Konto auf alteziegel.com an, um Zugang zu ${LIMIT_LOGGED_IN} Visualisierungen pro Tag zu erhalten.`
+          }
+        : {
+            loggedIn: `Wykorzystałeś dzienny limit ${LIMIT_LOGGED_IN} generowań na dziś. Wróć jutro, żeby stworzyć kolejne wizualizacje.`,
+            anonymous: `Wykorzystałeś swoją bezpłatną, jednorazową wizualizację na dziś. Zaloguj się na swoje konto na starecegly.com, żeby mieć dostęp do ${LIMIT_LOGGED_IN} generowań dziennie.`
+          };
       return res.status(429).json({
-        error: isLoggedIn
-          ? `Wykorzystałeś dzienny limit ${LIMIT_LOGGED_IN} generowań na dziś. Wróć jutro, żeby stworzyć kolejne wizualizacje.`
-          : `Wykorzystałeś swoją bezpłatną, jednorazową wizualizację na dziś. Zaloguj się na swoje konto na starecegly.com, żeby mieć dostęp do ${LIMIT_LOGGED_IN} generowań dziennie.`,
+        error: isLoggedIn ? messages.loggedIn : messages.anonymous,
         limitReached: true,
         loggedIn: isLoggedIn
       });
@@ -170,26 +165,9 @@ module.exports = async (req, res) => {
     }
 
     let productInline = null;
-    let imageWasSquashed = false;
     if(productImage){
       try{
-        const { buffer, mimeType } = await fetchImageBuffer(productImage);
-        let finalBuffer = buffer;
-        let finalMimeType = mimeType;
-
-        const ratio = Number(productAspectRatio);
-        if(ratio && ratio > ASSUMED_DEFAULT_BRICK_RATIO * 1.15){
-          try{
-            finalBuffer = await squashImageVertically(buffer, ratio);
-            finalMimeType = "image/jpeg";
-            imageWasSquashed = true;
-          }catch(squashErr){
-            console.error("Błąd ściskania obrazu referencyjnego:", squashErr);
-            // kontynuuj z oryginalnym, nieściśniętym obrazem
-          }
-        }
-
-        productInline = { mimeType: finalMimeType, data: finalBuffer.toString("base64") };
+        productInline = await fetchImageAsInlineData(productImage);
       }catch(e){
         productInline = null; // kontynuuj bez wzorca wizualnego, opieramy się na opisie tekstowym
       }
@@ -239,10 +217,7 @@ Otrzymujesz dwa zdjęcia:
 
 Twoje zadanie:
 Zastąp WYŁĄCZNIE podświetlony obszar realistyczną okładziną z płytek z cegły "${productName}". Opis materiału: ${productDescription || "płytka z cegły o naturalnej, nieregularnej fakturze"}.
-${productInline ? (imageWasSquashed
-  ? "Dołączam też osobne zdjęcie referencyjne materiału/tekstury — UWAGA: to zdjęcie zostało CELOWO ściśnięte w pionie, żeby dosłownie pokazać prawdziwe, mocno wydłużone proporcje pojedynczej płytki tego produktu (inaczej niż standardowa cegła). Potraktuj proporcje widoczne na tym zdjęciu jako wiążący wzorzec kształtu modułu — nie prostuj ich z powrotem do standardowych proporcji cegły. Kolor i fakturę również dopasuj do tego wzorca."
-  : "Dołączam też osobne zdjęcie referencyjne samego materiału/tekstury — dopasuj kolor, fakturę i charakter cegły dokładnie do tego wzorca."
-) : ""}
+${productInline ? "Dołączam też osobne zdjęcie referencyjne samego materiału/tekstury — dopasuj kolor, fakturę i charakter cegły dokładnie do tego wzorca." : ""}
 
 Zastosuj dokładnie następujące parametry:
 - Powierzchnia: ${surfaceLabel}.
@@ -256,6 +231,7 @@ Zasady krytyczne:
 - Zachowaj naturalne, realistyczne przejścia na krawędziach zaznaczonego obszaru — bez twardych, sztucznych linii cięcia.
 - Cała zaznaczona powierzchnia ma być pokryta JEDNOLITĄ okładziną — bez ramek, obwódek, listew, podziału na panele lub sekcje, chyba że wynika to wyłącznie z naturalnego układu płytek opisanego wyżej.
 - KRYTYCZNE — BRAK BIAŁYCH/JASNYCH OBWÓDEK WOKÓŁ OTWORÓW: jeśli w zaznaczonym obszarze znajdują się okna, drzwi lub inne otwory, okładzina z cegły MUSI sięgać dokładnie do ich krawędzi (do ramy okna/drzwi), bez żadnego niepomalowanego, jasnego, białego lub pustego paska/obwódki pozostawionego między cegłą a otworem. To bardzo częsty błąd do uniknięcia — sprawdź dokładnie każdą krawędź otworu w zaznaczonym obszarze przed zakończeniem generowania. Jedyna dozwolona "ramka" to prawdziwa, fizyczna framuga/ościeżnica okna lub drzwi, jeśli była widoczna na oryginalnym zdjęciu — nic ponad to.
+- SPÓJNOŚĆ TEKSTURY NA CAŁEJ POWIERZCHNI: każda pojedyncza cegła i każda spoina w zaznaczonym obszarze musi być wyraźna, ostra i spójna z resztą okładziny — bez lokalnych rozmyć, zniekształceń, "poszarpanych" fragmentów, zlewających się ze sobą cegieł ani innych lokalnych artefaktów. Jeśli jakikolwiek pojedynczy fragment (nawet mały) odbiega jakością lub wyrazistością od reszty wygenerowanej okładziny, popraw go tak, żeby pasował do reszty przed zwróceniem wyniku.
 - Nie dodawaj znaków wodnych, tekstu ani elementów graficznych spoza sceny.
 - Wygeneruj wyłącznie finalny, fotorealistyczny obraz wynikowy.
 
@@ -278,19 +254,37 @@ ${productDims ? `5. Proporcje pojedynczej płytki: ${productDims}${productShapeH
 
     const geminiRequest = {
       contents: [{ role: "user", parts: promptParts }],
-      generationConfig: { responseModalities: ["IMAGE"] }
+      generationConfig: { responseModalities: ["TEXT", "IMAGE"] }
     };
 
-    const geminiRes = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(geminiRequest)
-    });
+    let geminiRes = null;
+    let usedModel = null;
+    let lastErrorText = "";
 
-    if(!geminiRes.ok){
-      const errText = await geminiRes.text().catch(() => "");
-      console.error("Gemini API error:", geminiRes.status, errText);
-      return res.status(502).json({ error: `Błąd generatora obrazu (${geminiRes.status}). Spróbuj ponownie.` });
+    for(const modelId of GEMINI_MODEL_CANDIDATES){
+      const attemptRes = await fetch(`${GEMINI_ENDPOINT_BASE}/${modelId}:generateContent?key=${apiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(geminiRequest)
+      });
+
+      if(attemptRes.ok){
+        geminiRes = attemptRes;
+        usedModel = modelId;
+        break;
+      }
+
+      lastErrorText = await attemptRes.text().catch(() => "");
+      console.error(`Gemini API error dla modelu ${modelId}:`, attemptRes.status, lastErrorText);
+
+      // Jeśli błąd NIE wygląda na "model nieznaleziony/niedostępny" (np. limit,
+      // zła treść promptu), nie ma sensu próbować kolejnego modelu — przerwij.
+      const looksLikeModelIssue = attemptRes.status === 404 || attemptRes.status === 400;
+      if(!looksLikeModelIssue) break;
+    }
+
+    if(!geminiRes){
+      return res.status(502).json({ error: `Błąd generatora obrazu. Spróbuj ponownie.` });
     }
 
     const geminiData = await geminiRes.json();
@@ -309,7 +303,8 @@ ${productDims ? `5. Proporcje pojedynczej płytki: ${productDims}${productShapeH
       image: `data:${mime};base64,${b64}`,
       remaining: rl.remaining,
       limit: limit,
-      loggedIn: isLoggedIn
+      loggedIn: isLoggedIn,
+      modelUsed: usedModel
     });
 
   }catch(err){
