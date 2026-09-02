@@ -430,7 +430,7 @@
         <div class="chip-row" data-group="layout">
           <button class="chip active" data-value="klasyczne-przesuniecie">Klasyczny</button>
           <button class="chip" data-value="prosty">Prosty</button>
-          
+          <button class="chip" data-value="pionowy">Pionowy</button>
           <button class="chip" data-value="jodelka">Jodełka</button>
         </div>
       </div>
@@ -1618,7 +1618,8 @@ Przed zakupem zalecamy zapoznanie się ze zdjęciami produktu, a w przypadku wą
   function labelFor(v){
     const map = {
       "elewacja":"Elewacja", "sciana-wewnetrzna":"Ściana wewnętrzna", "kominek":"Kominek / zabudowa", "inna":"Inna powierzchnia",
-      "z-fuga":"Montaż z fugą", "bez-fugi":"Montaż bez fugi"
+      "z-fuga":"Montaż z fugą", "bez-fugi":"Montaż bez fugi",
+      "klasyczne-przesuniecie":"Klasyczny", "prosty":"Prosty", "pionowy":"Pionowy", "jodelka":"Jodełka"
     };
     return map[v] || v;
   }
