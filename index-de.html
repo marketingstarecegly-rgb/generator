@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
-<title>Wizualizator cegły | Stare Cegły</title>
-<meta name="description" content="Dodaj zdjęcie swojej ściany lub elewacji i sprawdź, jak będzie wyglądać z płytkami z cegły Stare Cegły.">
+<title>Ziegel-Visualisierer | Alte Ziegel</title>
+<meta name="description" content="Laden Sie ein Foto Ihrer Wand oder Fassade hoch und sehen Sie, wie sie mit Alte Ziegel Ziegelfliesen aussehen wird.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -365,8 +365,8 @@
 
 <section class="hero">
   <p class="hero-eyebrow">Werkzeug / kostenlose Visualisierung</p>
-  <h1>Sehen Sie diesen Ziegel an Ihrer Wand, bevor Sie ihn bestellen</h1>
-  <p>Fügen Sie ein Foto Ihrer Wand oder Fassade hinzu, markieren Sie mit dem Finger oder der Maus die zu verändernde Fläche und wählen Sie eines der Alte Ziegel Produkte. Das Ergebnis erhalten Sie in wenigen Sekunden — <strong>ohne Konto anzulegen</strong>.</p>
+  <h1>Sehen Sie, wie der gewählte Ziegel an Ihrer Wand aussehen wird.</h1>
+  <p>Fügen Sie ein Foto Ihrer Wand oder Fassade hinzu, markieren Sie mit dem Finger oder der Maus die zu verändernde Fläche und wählen Sie eines unserer Produkte. Die Visualisierung erstellen wir in wenigen Sekunden — <strong>ohne Konto anzulegen</strong>.</p>
 </section>
 
 <div class="studio">
@@ -378,7 +378,6 @@
         <h2>Foto hinzufügen</h2>
       </div>
     </div>
-
     <div class="canvas-zone">
       <div class="dropzone" id="dropzone">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
@@ -421,8 +420,8 @@
         <div class="chip-row" data-group="surface">
           <button class="chip active" data-value="elewacja">Fassade</button>
           <button class="chip" data-value="sciana-wewnetrzna">Innenwand</button>
-          <button class="chip" data-value="kominek">Kamin / Verkleidung</button>
-          <button class="chip" data-value="inna">Andere Fläche</button>
+          
+          <button class="chip" data-value="inna">Boden</button>
         </div>
       </div>
 
@@ -431,7 +430,7 @@
         <div class="chip-row" data-group="layout">
           <button class="chip active" data-value="klasyczne-przesuniecie">Klassischer Versatz</button>
           <button class="chip" data-value="prosty">Gerader Verband</button>
-          <button class="chip" data-value="mieszanka">Natürlicher Mix</button>
+          <button class="chip" data-value="pionowy">Vertikaler Verband</button>
           <button class="chip" data-value="jodelka">Fischgrätmuster</button>
         </div>
       </div>
@@ -502,11 +501,23 @@
   <a href="https://alteziegel.com">alteziegel.com</a> · info@alteziegel.com
 </footer>
 
+<span style="display: block; text-align: center; font-size: 11px; line-height: 1.0; color: #777;">
+<strong>Wichtige Informationen zur KI-Visualisierung</strong><br><br>
+
+Die Visualisierung wurde mithilfe künstlicher Intelligenz erstellt und dient ausschließlich der Veranschaulichung. Das generierte Bild kann vom tatsächlichen Erscheinungsbild der ausgewählten Ziegelfliese abweichen – insbesondere hinsichtlich Farbe, Farbton, Struktur, Oberfläche, Abmessungen und Proportionen.<br><br>
+
+Bei unseren historischen Ziegelfliesen aus Rückbauobjekten sind natürliche Unterschiede in Farbe, Struktur, Patina und Oberfläche ein charakteristisches Merkmal des authentischen Materials.<br><br>
+
+Die KI-Visualisierung stellt keine exakte Darstellung des Produkts dar und sollte nicht als Grundlage für die Beurteilung des tatsächlichen Erscheinungsbildes dienen.<br><br>
+
+Vor dem Kauf empfehlen wir, die Produktfotos zu beachten und bei Unsicherheiten ein Muster zu bestellen.
+</span>
+
 <script>
 (function(){
   "use strict";
 
-  // ---- product catalogue (echte Alte Ziegel Produkte von alteziegel.com) ----
+  // ---- product catalogue ----
   const PRODUCTS = [
 
     // ---- Abbruchziegelfliesen (Historic Line) ----
@@ -1010,7 +1021,6 @@
     }
   ];
 
-
   const state = {
     productId: null,
     surface: "elewacja",
@@ -1033,13 +1043,13 @@
       const urlId = new URLSearchParams(window.location.search).get("customerId");
       if(urlId && urlId.trim()) state.customerId = urlId.trim();
     }catch(err){ /* ignoruj */ }
-    console.log("[wizualizator] customerId z URL przy starcie:", state.customerId || "(brak)");
+    console.log("[visualizer] customerId aus URL beim Start:", state.customerId || "(keine)");
   })();
   window.addEventListener("message", (e) => {
-    console.log("[wizualizator] odebrano wiadomość postMessage z:", e.origin, "dane:", e.data);
+    console.log("[visualizer] postMessage empfangen von:", e.origin, "Daten:", e.data);
     if(e.data && e.data.type === "stare-cegly-auth" && e.data.customerId){
       state.customerId = String(e.data.customerId).trim();
-      console.log("[wizualizator] ustawiono customerId z postMessage:", state.customerId);
+      console.log("[visualizer] customerId aus postMessage gesetzt:", state.customerId);
     }
   });
 
@@ -1047,7 +1057,7 @@
   const GROUP_ORDER = [
     { key: "historic line", label: "Historic Line — Abbruchziegelfliesen" },
     { key: "modern line", label: "Modern Line — Betonfliesen in Ziegeloptik" },
-    { key: "seria long", label: "Rustic Line — Rustic Lang im Langformat (44/52 cm)" },
+    { key: "seria long", label: "Rustic Line — Langformat (44/52 cm)" },
     { key: "podłoga / taras", label: "Bodenfliesen und Terrassenplatten" }
   ];
 
@@ -1286,6 +1296,65 @@
     for(let i=3; i<data.length; i+=4*97){ if(data[i] > 0) return true; }
     return false;
   }
+
+  // ---- twarde ograniczenie wyniku do zaznaczonego obszaru ----
+  // Model AI dostaje tylko wizualną podpowiedź (podświetlenie) i może w praktyce
+  // zmienić fragmenty POZA zaznaczeniem. Żeby to fizycznie wykluczyć, po otrzymaniu
+  // wygenerowanego obrazu wycinamy z niego WYŁĄCZNIE zamalowany obszar (na podstawie
+  // maski pędzla) i nakładamy go na oryginalne, niezmienione zdjęcie. Wszystko poza
+  // zaznaczeniem wraca zawsze do 100% oryginału, niezależnie od tego, co wygenerował model.
+
+  // Maska pędzla jest rysowana z alfa 0.55 (dla czytelności podświetlenia na podglądzie),
+  // więc na potrzeby wycinania podbijamy przezroczystość do pełnej (z zachowaniem
+  // naturalnie miękkich, antyaliasowanych krawędzi pędzla, żeby uniknąć twardej,
+  // widocznej linii cięcia).
+  function buildClipMaskCanvas(){
+    const w = maskCanvas.width, h = maskCanvas.height;
+    const src = maskCtx.getImageData(0, 0, w, h);
+    const out = document.createElement("canvas");
+    out.width = w; out.height = h;
+    const octx = out.getContext("2d");
+    const dst = octx.createImageData(w, h);
+    for(let i = 0; i < src.data.length; i += 4){
+      const a = src.data[i + 3];
+      dst.data[i] = 255; dst.data[i + 1] = 255; dst.data[i + 2] = 255;
+      dst.data[i + 3] = a > 0 ? Math.min(255, Math.round(a / 0.55)) : 0;
+    }
+    octx.putImageData(dst, 0, 0);
+    return out;
+  }
+
+  function loadImageAsync(src){
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("Das Ergebnisbild konnte nicht geladen werden."));
+      img.src = src;
+    });
+  }
+
+  // Nakłada na oryginalne zdjęcie WYŁĄCZNIE fragment wygenerowanego obrazu
+  // znajdujący się pod zamalowanym obszarem (clipMaskCanvas). Reszta sceny
+  // (poza zaznaczeniem) jest gwarantowanym, niezmienionym oryginałem.
+  async function compositeResultToMaskedArea(generatedDataUrl, clipMaskCanvas, w, h){
+    const genImg = await loadImageAsync(generatedDataUrl);
+
+    const result = document.createElement("canvas");
+    result.width = w; result.height = h;
+    const rctx = result.getContext("2d");
+    rctx.drawImage(baseCanvas, 0, 0, w, h);
+
+    const genCanvas = document.createElement("canvas");
+    genCanvas.width = w; genCanvas.height = h;
+    const gctx = genCanvas.getContext("2d");
+    gctx.drawImage(genImg, 0, 0, w, h);
+    gctx.globalCompositeOperation = "destination-in";
+    gctx.drawImage(clipMaskCanvas, 0, 0);
+
+    rctx.drawImage(genCanvas, 0, 0);
+    return result.toDataURL("image/jpeg", 0.95);
+  }
+
   function updateGenerateState(){
     const hasImage = !!state.imageDataUrl;
     const hasProduct = !!state.productId;
@@ -1323,25 +1392,29 @@
       octx.drawImage(maskCanvas, 0, 0);
       const highlightedDataUrl = overlayCanvas.toDataURL("image/jpeg", 0.92);
       const originalDataUrl = baseCanvas.toDataURL("image/jpeg", 0.92);
+      const clipMaskCanvas = buildClipMaskCanvas();
+      const canvasW = baseCanvas.width, canvasH = baseCanvas.height;
 
       const payload = {
         originalImage: originalDataUrl,
         highlightedImage: highlightedDataUrl,
         productName: product.name,
-        productDescription: product.desc,
+        productDescription: product.desc || [product.textureDetails, product.colorPalette, product.materialsInfo].filter(Boolean).join(" "),
         productDims: product.dims || null,
         productShapeHint: product.shapeHint || null,
         productAspectRatio: product.aspectRatio || null,
         productImage: product.img,
+        productTextureDetails: product.textureDetails || null,
+        productColorPalette: product.colorPalette || null,
+        productMaterialsInfo: product.materialsInfo || null,
         surface: state.surface,
         layout: state.layout,
         mount: state.mount,
         mortarColor: state.mount === "bez-fugi" ? null : state.mortarColor,
-        customerId: state.customerId || null,
-        lang: "de"
+        customerId: state.customerId || null
       };
 
-      console.log("[wizualizator] Anfrage wird gesendet mit customerId:", payload.customerId || "(keine — als Gast behandelt)");
+      console.log("[visualizer] sende Anfrage mit customerId:", payload.customerId || "(keine — als Gast behandelt)");
 
       const res = await fetch("/api/generate", {
         method: "POST",
@@ -1356,27 +1429,30 @@
           errorBox.classList.add("show");
           return;
         }
-        throw new Error(err.error || `Serverfehler (${res.status})`);
+        throw new Error(err.error || `Błąd serwera (${res.status})`);
       }
       const data = await res.json();
       if(!data.image){
         throw new Error("Der Server hat kein Ergebnisbild zurückgegeben.");
       }
       if(data.modelUsed){
-        console.log("[wizualizator] generiert mit Modell:", data.modelUsed);
+        console.log("[visualizer] generiert mit Modell:", data.modelUsed);
       }
 
+      // Domykamy wynik do zamalowanego obszaru — reszta zdjęcia to gwarantowany oryginał.
+      const finalDataUrl = await compositeResultToMaskedArea(data.image, clipMaskCanvas, canvasW, canvasH);
+
       beforeImg.src = originalDataUrl;
-      afterImg.src = data.image;
+      afterImg.src = finalDataUrl;
       const remainingNote = (data.remaining !== null && data.remaining !== undefined)
-        ? ` · heute übrig: ${data.remaining}/${data.limit}`
+        ? ` · pozostało dziś: ${data.remaining}/${data.limit}`
         : "";
       resultMeta.textContent = `${product.name} · ${labelFor(state.surface)} · ${labelFor(state.mount)}${remainingNote}`;
-      downloadBtn.href = data.image;
+      downloadBtn.href = finalDataUrl;
       resultWrap.classList.add("show");
       resultWrap.scrollIntoView({behavior:"smooth", block:"start"});
     }catch(err){
-      errorBox.textContent = "Die Visualisierung konnte nicht erstellt werden: " + err.message + ". Bitte versuchen Sie es gleich noch einmal.";
+      errorBox.textContent = "Die Visualisierung konnte nicht erstellt werden: " + err.message + ". Bitte versuchen Sie es in Kürze erneut.";
       errorBox.classList.add("show");
     }finally{
       generateBtn.classList.remove("loading");
@@ -1386,8 +1462,9 @@
 
   function labelFor(v){
     const map = {
-      "elewacja":"Fassade", "sciana-wewnetrzna":"Innenwand", "kominek":"Kamin / Verkleidung", "inna":"Andere Fläche",
-      "z-fuga":"Mit Fuge", "bez-fugi":"Ohne Fuge"
+      "elewacja":"Fassade", "sciana-wewnetrzna":"Innenwand", "kominek":"Kamin / Verkleidung", "inna":"Boden",
+      "z-fuga":"Mit Fuge", "bez-fugi":"Ohne Fuge",
+      "klasyczne-przesuniecie":"Klassischer Versatz", "prosty":"Gerader Verband", "pionowy":"Vertikaler Verband", "jodelka":"Fischgrätmuster"
     };
     return map[v] || v;
   }
