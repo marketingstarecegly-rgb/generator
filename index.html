@@ -319,6 +319,13 @@ button{cursor:pointer}
 
 /* konfigurator osadzony w ramce na starecegly.com: sklep ma własny nagłówek */
 .is-embedded .brandbar{display:none}
+
+/* przycisk „Dodaj do koszyka” */
+.btn[hidden]{display:none}
+.btn:disabled{opacity:.6;cursor:progress}
+.cartmsg{flex:1 1 100%;margin:2px 0 0;font-size:13.5px;color:var(--ink-soft)}
+.cartmsg a{color:var(--brand-text);font-weight:700}
+.cartmsg.is-warn{color:#a3361c}
 </style>
 </head>
 <body>
@@ -516,8 +523,10 @@ button{cursor:pointer}
         <div class="buy__ship" id="ship"></div>
       </div>
       <div class="buy__cta">
+        <button class="btn" id="btnCart" type="button" hidden>Dodaj do koszyka</button>
         <a class="btn" id="btnMail" href="#">Zapytaj o ofertę</a>
         <button class="btn btn--ghost" id="btnPdf" type="button">Pobierz PDF</button>
+        <p class="cartmsg" id="cartMsg" role="status" hidden></p>
       </div>
     </div>
 
@@ -2409,6 +2418,7 @@ function update(){
   $('#btnMail').href = 'mailto:' + CONFIG.contact.mail + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
   $('#shopLink').href = wood.shop;
 
+  updateCart();
   try { history.replaceState(null, '', shareUrl()); } catch (e) {}
 }
 
@@ -2447,6 +2457,54 @@ function toast(msg){
   var t = $('#toast'); t.textContent = msg; t.classList.add('is-on');
   clearTimeout(toastTimer); toastTimer = setTimeout(function(){ t.classList.remove('is-on'); }, 2200);
 }
+
+/* ============================================================
+   Koszyk Shopera. Konfigurator działa w ramce na innej domenie,
+   więc prosi stronę sklepu (postMessage) o dodanie produktu.
+   Cenę liczy sklep, nie konfigurator. Kierunek otwierania, odbicie
+   i uchwyt to tylko wizualizacja i nie są wysyłane.
+   ============================================================ */
+var CART = { productId: 372 };   /* sosna: drzwi jednoskrzydłowe (dwuskrzydłowe = 2 szt.) */
+var cartPending = null, cartTimer = null;
+function cartLines(){
+  if (!computePrice()) return null;   /* wymiar niestandardowy lub własny wzór: tylko zapytanie */
+  var d = dims(), lines = [], seen = {};
+  leafModels().forEach(function(id){
+    if (seen[id]){ seen[id].qty++; return; }
+    var ln = { product: CART.productId, w: d.W, h: d.H, color: colorObj().name, model: id,
+               system: !!state.system, back: !!(state.backSame && BACK_SAME_OK[id]), qty: 1 };
+    seen[id] = ln; lines.push(ln);
+  });
+  return lines;
+}
+function updateCart(){
+  var b = $('#btnCart'); if (!b) return;
+  var on = !!cartLines();
+  b.hidden = !on;
+  $('#btnMail').classList.toggle('btn--ghost', on);
+}
+function cartDone(ok, reason){
+  clearTimeout(cartTimer); cartPending = null;
+  var b = $('#btnCart'), m = $('#cartMsg');
+  b.disabled = false; b.textContent = 'Dodaj do koszyka';
+  m.hidden = false; m.classList.toggle('is-warn', !ok);
+  if (ok){ m.innerHTML = 'Dodano do koszyka. <a href="https://starecegly.com/pl/basket" target="_top">Przejdź do koszyka</a>'; toast('Dodano do koszyka'); }
+  else if (reason === 'missing'){ m.textContent = 'Tego wariantu nie ma jeszcze w sklepie online. Wyślij zapytanie o ofertę.'; }
+  else { m.textContent = 'Nie udało się dodać do koszyka. Spróbuj ponownie lub wyślij zapytanie o ofertę.'; }
+}
+$('#btnCart').addEventListener('click', function(){
+  var lines = cartLines(); if (!lines) return;
+  if (window.parent === window){ window.open(WOODS[state.wood].shop, '_blank'); return; }   /* otwarte poza sklepem */
+  cartPending = String(Date.now());
+  this.disabled = true; this.textContent = 'Dodaję…'; $('#cartMsg').hidden = true;
+  window.parent.postMessage({ type: 'stare-cegly-add-to-cart', id: cartPending, lines: lines }, '*');
+  cartTimer = setTimeout(function(){ cartDone(false, 'timeout'); }, 20000);
+});
+window.addEventListener('message', function(e){
+  var d = e.data;
+  if (e.source !== window.parent || !d || d.type !== 'stare-cegly-cart-result' || d.id !== cartPending) return;
+  cartDone(!!d.ok, d.reason);
+});
 function copyText(text, msg){
   function fallback(){
     var ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
