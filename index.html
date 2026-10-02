@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>try{if(window.self!==window.top)document.documentElement.classList.add("is-embedded");}catch(e){document.documentElement.classList.add("is-embedded");}</script>
 <title>Konfigurator drzwi przesuwnych rustykalnych | Stare Cegły</title>
 <meta name="description" content="Zaprojektuj drzwi przesuwne z litego drewna: wybierz model, wybarwienie i wymiar. Podgląd i cena na żywo. Starecegly.com">
 <style>
@@ -315,6 +316,9 @@ button{cursor:pointer}
   .model{flex:0 0 calc((100vw - 28px - 16px) / 3.4);scroll-snap-align:start;padding:8px 4px 6px}
   .model>svg{height:104px}
 }
+
+/* konfigurator osadzony w ramce na starecegly.com: sklep ma własny nagłówek */
+.is-embedded .brandbar{display:none}
 </style>
 </head>
 <body>
@@ -554,10 +558,9 @@ var CONFIG = {
 
   /* Ceny brutto w zł za JEDNO skrzydło.
      Sosna: cennik wymiarów standardowych w tabeli poniżej (klucz „szerokość×wysokość”).
-     Dąb i jesion: cena bazowa 3490 zł (z karty produktu), dopłaty za wymiar = 0.
      System przesuwny (prowadnica + wózki) +450 zł. */
   price: {
-    base:      { pine: 1990, oak: 3490, ash: 3490 },
+    base:      { pine: 1990 },
     table: {
       pine: {
         '80x200': 1990, '90x200': 2090, '100x200': 2190,
@@ -607,12 +610,6 @@ var WOODS = {
             { id:'rust21', name:'Rustykalna 21', hex:'#8e8b7f' },
             { id:'rust22', name:'Rustykalna 22', hex:'#969899' }
           ] },
-  oak:  { name: 'Dąb', desc: 'Twardszy i wytrzymalszy, z wyrazistym usłojeniem. Oferta premium.', knots: false, def: 'retro3',
-          ship: 'Termin potwierdza doradca',
-          shop: 'https://starecegly.com/pl/p/RUSTYKALNE-DRZWI-DEBOWE-/549', colors: null },
-  ash:  { name: 'Jesion', desc: 'Twardy, jasny, o wyraźnym rysunku słojów. Oferta premium.', knots: false, def: 'retro3',
-          ship: 'Termin potwierdza doradca',
-          shop: 'https://starecegly.com/pl/p/RUSTYKALNE-DRZWI-JESIONOWE/550', colors: null }
 };
 /* Zdjęcia wybarwień Retro 1-9 (miniatura okrągła + kafelek tekstury do podglądu drzwi) */
 var RETRO_IMG = {
@@ -656,10 +653,6 @@ var RETRO_PAL = {
 };
 WOODS.pine.colors.forEach(function(c){ var d = RETRO_IMG[c.id]; if (d){ c.sw = d.sw; c.pal = RETRO_PAL[c.id]; } });
 
-/* Sosna: Retro 1-9 + Rustykalna 1-22. Dąb i jesion: tylko Retro 1-9 */
-var RETRO_ONLY = WOODS.pine.colors.filter(function(c){ return c.id.indexOf('retro') === 0; });
-/* Oferta tylko z sosny: dąb i jesion wyłączone (usuń tę linię, aby je przywrócić) */
-delete WOODS.oak; delete WOODS.ash;
 
 /* ============================================================
    Zdjęcia wybarwień -> deski na drzwiach
