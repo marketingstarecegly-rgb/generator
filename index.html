@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Konfigurator drzwi przesuwnych rustykalnych | Stare Cegły</title>
-<meta name="description" content="Zaprojektuj drzwi przesuwne z drewna sosnowego: wybierz model, wybarwienie i wymiar. Podgląd i cena na żywo. Starecegly.com">
+<meta name="description" content="Zaprojektuj drzwi przesuwne z litego drewna: wybierz model, wybarwienie i wymiar. Podgląd i cena na żywo. Starecegly.com">
 <style>
 /* ============================================================
    PALETA – dopasuj do starecegly.com zmieniając tylko te zmienne
@@ -299,6 +299,21 @@ button{cursor:pointer}
   .cfg{padding-left:10px;padding-right:10px}
   .stage__canvas,.buy{margin-left:-10px;margin-right:-10px}
   .buy{padding-left:10px;padding-right:10px}
+}
+
+/* ---------- telefony: wybór wzoru jako przewijane rolki (lewo/prawo) ---------- */
+@media (max-width:600px){
+  .models,.models.is-collapsed{display:flex;grid-template-columns:none;flex-wrap:nowrap;gap:8px;
+    overflow-x:auto;overflow-y:hidden;margin:0 -14px;padding:2px 14px 8px;
+    scroll-snap-type:x proximity;scroll-padding:0 14px;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;
+    scrollbar-width:none}
+  .models::-webkit-scrollbar{display:none}
+  /* pokaż wszystkie wzory (wyłącz zwijanie do 12) i ukryj przyciski „Pokaż wszystkie” */
+  .models.is-collapsed .model:nth-child(n+13):not(.model--own){display:flex}
+  #modelMore,#model2More{display:none}
+  /* ok. 3,4 wzoru na ekranie – częściowo widoczny kolejny podpowiada, że można przewijać */
+  .model{flex:0 0 calc((100vw - 28px - 16px) / 3.4);scroll-snap-align:start;padding:8px 4px 6px}
+  .model>svg{height:104px}
 }
 </style>
 </head>
@@ -2639,7 +2654,7 @@ function quoteDoc(pic, picBack, tech){
 
   var items = [], totals = [];
   if (p){
-    items.push([{ text: [{ text: 'Drzwi przesuwne z drewna sosnowego\n', bold: true }, { text: wood.name + ', ' + ids + ', ' + d.W + ' × ' + d.H + ' cm, wybarwienie ' + c.name, color: gray, fontSize: 8 }] },
+    items.push([{ text: [{ text: 'Drzwi przesuwne z litego drewna\n', bold: true }, { text: wood.name + ', ' + ids + ', ' + d.W + ' × ' + d.H + ' cm, wybarwienie ' + c.name, color: gray, fontSize: 8 }] },
       { text: p.leaves + ' szt.', alignment: 'center' }, { text: fmt(p.one), alignment: 'right' }, { text: fmt(p.door), alignment: 'right' }]);
     if (p.back) items.push([{ text: [{ text: 'Tył taki sam jak przód\n', bold: true }, { text: 'dopłata za wykonanie tylnej strony w tym samym wzorze co przód', color: gray, fontSize: 8 }] },
       { text: p.backN + ' szt.', alignment: 'center' }, { text: fmt(CONFIG.price.backSame), alignment: 'right' }, { text: fmt(p.back), alignment: 'right' }]);
@@ -2650,7 +2665,7 @@ function quoteDoc(pic, picBack, tech){
               { text: fmt(p.total), alignment: 'right', fontSize: 16, bold: true, color: brand },
               { text: 'w tym VAT ' + C.vat + '%: ' + fmt(vat) + ', netto: ' + fmt(p.total - vat), alignment: 'right', fontSize: 9, color: gray }];
   } else {
-    items.push([{ text: [{ text: 'Drzwi przesuwne z drewna sosnowego na wymiar\n', bold: true }, { text: wood.name + ', ' + ids + ', ' + d.W + ' × ' + d.H + ' cm, wybarwienie ' + c.name, color: gray, fontSize: 8 }] },
+    items.push([{ text: [{ text: 'Drzwi przesuwne z litego drewna na wymiar\n', bold: true }, { text: wood.name + ', ' + ids + ', ' + d.W + ' × ' + d.H + ' cm, wybarwienie ' + c.name, color: gray, fontSize: 8 }] },
       { text: (lm.length) + ' szt.', alignment: 'center' }, { text: 'do wyceny', alignment: 'right' }, { text: 'do wyceny', alignment: 'right' }]);
     totals = [{ text: quoteReason() + ': cenę i termin ustali doradca.', alignment: 'right', bold: true, margin: [0, 6, 0, 0] }];
   }
