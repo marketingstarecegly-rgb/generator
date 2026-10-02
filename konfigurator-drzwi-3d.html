@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Konfigurator drzwi przesuwnych rustykalnych | Stare Cegły</title>
-<meta name="description" content="Zaprojektuj drzwi przesuwne z litego drewna: wybierz model, wybarwienie i wymiar. Podgląd i cena na żywo. Starecegly.com">
+<meta name="description" content="Zaprojektuj drzwi przesuwne z litego drewna: wybierz model, drewno, wybarwienie i wymiar. Podgląd i cena na żywo. Starecegly.com">
 <style>
 /* ============================================================
    PALETA – dopasuj do starecegly.com zmieniając tylko te zmienne
@@ -333,7 +333,7 @@ button{cursor:pointer}
   <!-- ===== OPCJE ===== -->
   <section class="panel" aria-label="Opcje konfiguracji">
     <h1>Drzwi przesuwne z litego drewna</h1>
-    <p class="lead">Każde skrzydło robimy na zamówienie. Wybierz model, wybarwienie i wymiar, a podgląd oraz cena zmienią się od razu.</p>
+    <p class="lead">Każde skrzydło robimy na zamówienie. Wybierz model, drewno i wymiar, a podgląd oraz cena zmienią się od razu.</p>
 
     <div class="sec">
       <div class="sec__head"><h2>Konfiguracja</h2></div>
@@ -380,7 +380,7 @@ button{cursor:pointer}
       <p class="hint" id="backHint"></p>
     </div>
 
-    <div class="sec" style="display:none">
+    <div class="sec">
       <div class="sec__head"><h2>Rodzaj drewna</h2></div>
       <div class="woods" id="woods" role="group" aria-label="Rodzaj drewna"></div>
     </div>
@@ -576,8 +576,8 @@ WOODS.pine.colors.forEach(function(c){ var d = RETRO_IMG[c.id]; if (d){ c.sw = d
 
 /* Sosna: Retro 1-9 + Rustykalna 1-22. Dąb i jesion: tylko Retro 1-9 */
 var RETRO_ONLY = WOODS.pine.colors.filter(function(c){ return c.id.indexOf('retro') === 0; });
-/* Oferta tylko z sosny: dąb i jesion wyłączone (usuń tę linię, aby je przywrócić) */
-delete WOODS.oak; delete WOODS.ash;
+WOODS.oak.colors = RETRO_ONLY;
+WOODS.ash.colors = RETRO_ONLY;
 
 /* ============================================================
    Zdjęcia wybarwień -> deski na drzwiach
