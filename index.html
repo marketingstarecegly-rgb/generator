@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Konfigurator drzwi przesuwnych rustykalnych | Stare Cegły</title>
-<meta name="description" content="Zaprojektuj drzwi przesuwne z litego drewna: wybierz model, wybarwienie i wymiar. Podgląd i cena na żywo. Starecegly.com">
+<meta name="description" content="Zaprojektuj drzwi przesuwne z drewna sosnowego: wybierz model, wybarwienie i wymiar. Podgląd i cena na żywo. Starecegly.com">
 <style>
 /* ============================================================
    PALETA – dopasuj do starecegly.com zmieniając tylko te zmienne
@@ -2639,7 +2639,7 @@ function quoteDoc(pic, picBack, tech){
 
   var items = [], totals = [];
   if (p){
-    items.push([{ text: [{ text: 'Drzwi przesuwne z litego drewna\n', bold: true }, { text: wood.name + ', ' + ids + ', ' + d.W + ' × ' + d.H + ' cm, wybarwienie ' + c.name, color: gray, fontSize: 8 }] },
+    items.push([{ text: [{ text: 'Drzwi przesuwne z drewna sosnowego\n', bold: true }, { text: wood.name + ', ' + ids + ', ' + d.W + ' × ' + d.H + ' cm, wybarwienie ' + c.name, color: gray, fontSize: 8 }] },
       { text: p.leaves + ' szt.', alignment: 'center' }, { text: fmt(p.one), alignment: 'right' }, { text: fmt(p.door), alignment: 'right' }]);
     if (p.back) items.push([{ text: [{ text: 'Tył taki sam jak przód\n', bold: true }, { text: 'dopłata za wykonanie tylnej strony w tym samym wzorze co przód', color: gray, fontSize: 8 }] },
       { text: p.backN + ' szt.', alignment: 'center' }, { text: fmt(CONFIG.price.backSame), alignment: 'right' }, { text: fmt(p.back), alignment: 'right' }]);
@@ -2650,7 +2650,7 @@ function quoteDoc(pic, picBack, tech){
               { text: fmt(p.total), alignment: 'right', fontSize: 16, bold: true, color: brand },
               { text: 'w tym VAT ' + C.vat + '%: ' + fmt(vat) + ', netto: ' + fmt(p.total - vat), alignment: 'right', fontSize: 9, color: gray }];
   } else {
-    items.push([{ text: [{ text: 'Drzwi przesuwne z litego drewna na wymiar\n', bold: true }, { text: wood.name + ', ' + ids + ', ' + d.W + ' × ' + d.H + ' cm, wybarwienie ' + c.name, color: gray, fontSize: 8 }] },
+    items.push([{ text: [{ text: 'Drzwi przesuwne z drewna sosnowego na wymiar\n', bold: true }, { text: wood.name + ', ' + ids + ', ' + d.W + ' × ' + d.H + ' cm, wybarwienie ' + c.name, color: gray, fontSize: 8 }] },
       { text: (lm.length) + ' szt.', alignment: 'center' }, { text: 'do wyceny', alignment: 'right' }, { text: 'do wyceny', alignment: 'right' }]);
     totals = [{ text: quoteReason() + ': cenę i termin ustali doradca.', alignment: 'right', bold: true, margin: [0, 6, 0, 0] }];
   }
