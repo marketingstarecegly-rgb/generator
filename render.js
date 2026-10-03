@@ -2,7 +2,7 @@
 // Klucz API zostaje na serwerze, nie trafia do przeglądarki klienta.
 //
 // Zmienne środowiskowe:
-//   GEMINI_API_KEY             (wymagane) Twój klucz z Google AI Studio
+//   GEMINI_API_KEY             AQ.Ab8RN6KUbdZMB2kD7OSlBajunp3WTcXmmsq57lG6wSInA9f4pg
 //   FREE_LIMIT                 (opcjonalne) ile darmowych zdjęć na adres IP, domyślnie 1
 //   UPSTASH_REDIS_REST_URL     (zalecane) trwały licznik; bez niego licznik jest w pamięci
 //   UPSTASH_REDIS_REST_TOKEN   i resetuje się przy każdym restarcie funkcji
