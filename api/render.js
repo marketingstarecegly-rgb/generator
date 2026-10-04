@@ -36,13 +36,17 @@ async function addCount(id) {
 
 module.exports = async function handler(req, res) {
   const origin = req.headers.origin || '';
-  if (ALLOWED_ORIGINS.includes(origin)) res.setHeader('Access-Control-Allow-Origin', origin);
+  // zapytania z własnego hosta (ten sam projekt Vercel, także adresy generowane przez Git/Preview) są zawsze dozwolone
+  let sameHost = false;
+  try { sameHost = !!origin && new URL(origin).host === req.headers.host; } catch (e) {}
+  const originOk = sameHost || ALLOWED_ORIGINS.includes(origin);
+  if (originOk) res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  if (!ALLOWED_ORIGINS.includes(origin)) return res.status(403).json({ error: 'Forbidden origin' });
+  if (!originOk) return res.status(403).json({ error: 'Forbidden origin' });
 
   const key = process.env.GEMINI_API_KEY;
   if (!key) return res.status(500).json({ error: 'Brak GEMINI_API_KEY na serwerze' });
