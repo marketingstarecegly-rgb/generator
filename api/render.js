@@ -47,9 +47,11 @@ module.exports = async function handler(req, res) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return res.status(500).json({ error: 'Brak GEMINI_API_KEY na serwerze' });
 
-  const { image, mimeType, prompt, model } = req.body || {};
+  const { image, mimeType, prompt, model, refImage } = req.body || {};
   if (!image || typeof image !== 'string' || image.length > 6_000_000)
     return res.status(400).json({ error: 'Nieprawidłowy obraz' });
+  if (refImage && (typeof refImage !== 'string' || refImage.length > 2_000_000))
+    return res.status(400).json({ error: 'Nieprawidłowy obraz referencyjny' });
   const useModel = ALLOWED_MODELS.includes(model) ? model : ALLOWED_MODELS[0];
 
   // limit darmowych zdjęć: na adres IP; zużywa się dopiero po udanym wygenerowaniu
@@ -69,7 +71,7 @@ module.exports = async function handler(req, res) {
           contents: [{ parts: [
             { text: String(prompt || '').slice(0, 2000) },
             { inlineData: { mimeType: mimeType || 'image/jpeg', data: image } }
-          ] }],
+          ].concat(refImage ? [{ inlineData: { mimeType: 'image/jpeg', data: refImage } }] : []) }],
           generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
         })
       }
